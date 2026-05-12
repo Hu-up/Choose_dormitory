@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>宿舍选择后台</title>
+  <style>
+    :root {
+      --bg: #edf5ff;
+      --panel: #ffffff;
+      --ink: #10223f;
+      --muted: #617491;
+      --line: #c9dcf2;
+      --blue: #1d64d8;
+      --blue-deep: #0f3f91;
+      --blue-soft: #e4f0ff;
+      --green: #16803c;
+      --green-soft: #e7f6ec;
+      --red: #b42318;
+      --red-soft: #fdecec;
+      --amber: #946200;
+      --amber-soft: #fff4d6;
+      --shadow: 0 12px 32px rgba(29, 36, 51, .08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px;
+      background: #0f3f91;
+      color: #f8fafc;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--blue-deep);
+      font-weight: 800;
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 2px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #cfe2ff;
+      font-size: 14px;
+    }
+
+    nav {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .nav-button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: transparent;
+      color: #e6f0ff;
+      text-align: left;
+    }
+
+    .nav-button.active {
+      background: #ffffff;
+      color: var(--blue-deep);
+      font-weight: 800;
+    }
+
+    .nav-button.active {
+      box-shadow: inset 4px 0 0 #80b7ff;
+    }
+
+    .nav-button:not(.active):hover {
+      background: rgba(255, 255, 255, .12);
+      color: #ffffff;
+    }
+
+    .side-card {
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .06);
+    }
+
+    .side-card strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .side-card p {
+      margin-bottom: 0;
+      color: #c6d1e2;
+      font-size: 14px;
+    }
+
+    .sync-status {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .1);
+      color: #e6f0ff;
+      font-size: 13px;
+    }
+
+    main {
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .topbar h2 {
+      margin-bottom: 4px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .topbar p {
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: #ffffff;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .button.secondary {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+    }
+
+    .button.danger {
+      background: var(--red);
+    }
+
+    .button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      padding: 18px 18px 0;
+    }
+
+    .panel-head h3 {
+      margin-bottom: 4px;
+      font-size: 18px;
+    }
+
+    .panel-head p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 13px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 40px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .dorm-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .dorm-card {
+      width: 100%;
+      min-height: 176px;
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      align-content: start;
+      text-align: left;
+      box-shadow: 0 8px 22px rgba(29, 100, 216, .08);
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .dorm-card:not(:disabled):hover {
+      border-color: var(--blue);
+      box-shadow: 0 14px 30px rgba(29, 100, 216, .18);
+      transform: translateY(-2px);
+    }
+
+    .dorm-card.full {
+      background: #f8fafc;
+      color: #7b8493;
+      cursor: not-allowed;
+      opacity: .76;
+    }
+
+    .dorm-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .dorm-title {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .tag.red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .tag.amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .progress {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #edf1f5;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--blue);
+    }
+
+    .people {
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .people strong {
+      color: var(--ink);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .empty {
+      padding: 34px 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .notice {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: var(--amber-soft);
+      color: #5f4300;
+      font-size: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 5;
+      max-width: min(420px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #111827;
+      color: #ffffff;
+      box-shadow: var(--shadow);
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 960px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        position: static;
+        height: auto;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      main {
+        padding: 18px;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      .stats,
+      .two {
+        grid-template-columns: 1fr;
+      }
+
+      .dorm-list {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside>
+      <div class="brand">
+        <div class="brand-mark">宿</div>
+        <div>
+          <h1>管理后台</h1>
+          <p class="subtitle">宿舍与名单管理</p>
+        </div>
+      </div>
+
+      <nav aria-label="页面切换">
+        <button class="nav-button active" data-view="choose" data-gender="男">男生宿舍</button>
+        <button class="nav-button" data-view="choose" data-gender="女">女生宿舍</button>
+        <button class="nav-button" data-view="manage">宿舍管理</button>
+        <button class="nav-button" data-view="records">选择名单</button>
+      </nav>
+
+      <div class="side-card">
+        <strong>后台入口</strong>
+        <p>这个页面只给管理员使用，用来配置宿舍、查看名单、导出 CSV 和撤销错误记录。</p>
+      </div>
+      <div class="sync-status" id="syncStatus">正在连接在线数据库...</div>
+    </aside>
+
+    <main>
+      <section id="view-choose">
+        <div class="topbar">
+          <div>
+            <h2 id="chooseTitle">男生宿舍</h2>
+            <p id="chooseHint">填写个人信息后，直接点击一个有空床位的男生宿舍。</p>
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="exportRecordsBtn">导出名单</button>
+          </div>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>提交选择</h3>
+              <p>每个姓名和联系方式组合只能保留一条记录。</p>
+            </div>
+            <div class="panel-body">
+              <form class="form-grid" id="choiceForm">
+                <label>
+                  姓名
+                  <input id="studentName" autocomplete="name" required placeholder="例如：张三">
+                </label>
+                <div class="two">
+                  <label>
+                    性别
+                    <select id="studentGender" required disabled>
+                      <option value="男">男</option>
+                      <option value="女">女</option>
+                    </select>
+                  </label>
+                  <label>
+                    学号
+                    <input id="studentId" required inputmode="numeric" pattern="120242227[0-9]{3}" maxlength="12" placeholder="例如：120242227001">
+                  </label>
+                </div>
+                <div class="notice">填完个人信息后，在右侧点击宿舍卡片即可提交或更新选择。</div>
+              </form>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="dormListTitle">男生宿舍余量</h3>
+              <p>可点击的宿舍表示仍有空床位。</p>
+            </div>
+            <div class="panel-body">
+              <div class="dorm-list" id="dormList"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-manage" class="hidden">
+        <div class="topbar">
+          <div>
+            <h2>宿舍管理</h2>
+            <p>默认已生成适合约 210 人的宿舍，可按实际房间修改。</p>
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="resetDormsBtn">恢复默认宿舍</button>
+            <button class="button danger" id="clearAllBtn">清空全部数据</button>
+          </div>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>新增宿舍</h3>
+              <p>容量建议按真实床位填写。</p>
+            </div>
+            <div class="panel-body">
+              <form class="form-grid" id="dormForm">
+                <label>
+                  宿舍号
+                  <input id="dormName" required placeholder="例如：A101">
+                </label>
+                <div class="two">
+                  <label>
+                    性别
+                    <select id="dormGender" required>
+                      <option value="男">男</option>
+                      <option value="女">女</option>
+                    </select>
+                  </label>
+                  <label>
+                    容量
+                    <input id="dormCapacity" type="number" min="1" max="12" value="4" required>
+                  </label>
+                </div>
+                <button class="button" type="submit">添加宿舍</button>
+              </form>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>当前宿舍</h3>
+              <p>已有选择的宿舍不能删除，避免误删名单。</p>
+            </div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>宿舍</th>
+                    <th>性别</th>
+                    <th>容量</th>
+                    <th>已选</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="dormTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-records" class="hidden">
+        <div class="topbar">
+          <div>
+            <h2>选择名单</h2>
+            <p>可查看、撤销单条选择，也可以导出后在 Excel 中整理。</p>
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="exportRecordsBtn2">导出名单</button>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="panel-body table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>提交时间</th>
+                  <th>姓名</th>
+                  <th>性别</th>
+                  <th>学号</th>
+                  <th>宿舍</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="recordTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const SUPABASE_URL = "https://kzyxwnvjhojzayregxgc.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_SEzzFIpvvaq8fLvtphWf4A_8pnzVdQM";
+    const REFRESH_INTERVAL_MS = 15000;
+
+    const defaultDorms = [
+      ...Array.from({ length: 32 }, (_, index) => ({
+        id: `m-${index + 1}`,
+        name: `男生 ${String(index + 1).padStart(2, "0")} 宿舍`,
+        gender: "男",
+        capacity: 4
+      })),
+      ...Array.from({ length: 21 }, (_, index) => ({
+        id: `f-${index + 1}`,
+        name: `女生 ${String(index + 1).padStart(2, "0")} 宿舍`,
+        gender: "女",
+        capacity: 4
+      }))
+    ];
+
+    let state = { dorms: [], records: [] };
+    let activeGender = "男";
+    let isRefreshing = false;
+
+    const views = {
+      choose: document.querySelector("#view-choose"),
+      manage: document.querySelector("#view-manage"),
+      records: document.querySelector("#view-records")
+    };
+
+    const els = {
+      stats: document.querySelector("#stats"),
+      dormList: document.querySelector("#dormList"),
+      dormTable: document.querySelector("#dormTable"),
+      recordTable: document.querySelector("#recordTable"),
+      toast: document.querySelector("#toast"),
+      syncStatus: document.querySelector("#syncStatus"),
+      chooseTitle: document.querySelector("#chooseTitle"),
+      chooseHint: document.querySelector("#chooseHint"),
+      dormListTitle: document.querySelector("#dormListTitle")
+    };
+
+    document.querySelectorAll(".nav-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".nav-button").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        Object.values(views).forEach((view) => view.classList.add("hidden"));
+        views[button.dataset.view].classList.remove("hidden");
+        if (button.dataset.gender) {
+          activeGender = button.dataset.gender;
+          document.querySelector("#studentGender").value = activeGender;
+          renderChoosePageText();
+          renderDormList();
+        }
+      });
+    });
+
+    document.querySelector("#choiceForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      showToast("请直接点击右侧宿舍卡片完成选择。");
+    });
+
+    document.querySelector("#dormForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!ensureConfigured()) return;
+      const name = document.querySelector("#dormName").value.trim();
+      const gender = document.querySelector("#dormGender").value;
+      const capacity = Number(document.querySelector("#dormCapacity").value);
+
+      if (state.dorms.some((item) => normalize(item.name) === normalize(name))) {
+        showToast("这个宿舍号已经存在。");
+        return;
+      }
+
+      try {
+        await db("dorms", {
+          method: "POST",
+          body: JSON.stringify({
+            id: crypto.randomUUID(),
+            name,
+            gender,
+            capacity
+          })
+        });
+        event.target.reset();
+        document.querySelector("#dormCapacity").value = 4;
+        showToast("已添加宿舍。");
+        await refreshData();
+      } catch (error) {
+        handleError(error);
+      }
+    });
+
+    document.querySelector("#resetDormsBtn").addEventListener("click", async () => {
+      if (!ensureConfigured()) return;
+      if (!confirm("恢复默认宿舍会删除当前宿舍配置和所有选择记录，确定继续吗？")) return;
+      try {
+        await resetDorms();
+        showToast("已恢复默认宿舍。");
+      } catch (error) {
+        handleError(error);
+      }
+    });
+
+    document.querySelector("#clearAllBtn").addEventListener("click", async () => {
+      if (!ensureConfigured()) return;
+      if (!confirm("确定清空全部数据吗？这个操作无法撤销。")) return;
+      try {
+        await clearRemoteData();
+        showToast("已清空全部数据。");
+      } catch (error) {
+        handleError(error);
+      }
+    });
+
+    document.querySelector("#exportRecordsBtn").addEventListener("click", exportCsv);
+    document.querySelector("#exportRecordsBtn2").addEventListener("click", exportCsv);
+
+    function render() {
+      renderStats();
+      renderChoosePageText();
+      renderDormList();
+      renderDormTable();
+      renderRecordTable();
+    }
+
+    function renderStats() {
+      const totalBeds = state.dorms.reduce((sum, dorm) => sum + Number(dorm.capacity), 0);
+      const usedBeds = state.records.length;
+      const maleRecords = state.records.filter((item) => item.gender === "男").length;
+      const femaleRecords = state.records.filter((item) => item.gender === "女").length;
+      const maleBeds = state.dorms.filter((item) => item.gender === "男").reduce((sum, dorm) => sum + Number(dorm.capacity), 0);
+      const femaleBeds = state.dorms.filter((item) => item.gender === "女").reduce((sum, dorm) => sum + Number(dorm.capacity), 0);
+      const stats = [
+        ["总床位", totalBeds],
+        ["剩余床位", Math.max(totalBeds - usedBeds, 0)],
+        ["男生已选", `${maleRecords} / ${maleBeds}`],
+        ["女生已选", `${femaleRecords} / ${femaleBeds}`]
+      ];
+
+      els.stats.innerHTML = stats.map(([label, value]) => `
+        <div class="stat">
+          <span>${label}</span>
+          <strong>${value}</strong>
+        </div>
+      `).join("");
+    }
+
+    function renderChoosePageText() {
+      document.querySelector("#studentGender").value = activeGender;
+      els.chooseTitle.textContent = `${activeGender}生宿舍`;
+      els.chooseHint.textContent = `填写个人信息后，直接点击一个有空床位的${activeGender}生宿舍。`;
+      els.dormListTitle.textContent = `${activeGender}生宿舍余量`;
+    }
+
+    function renderDormList() {
+      const dorms = state.dorms.filter((dorm) => dorm.gender === activeGender);
+
+      if (!dorms.length) {
+        els.dormList.innerHTML = `<div class="empty">还没有宿舍，请先到“宿舍管理”添加。</div>`;
+        return;
+      }
+
+      els.dormList.innerHTML = dorms.map((dorm) => {
+        const people = state.records.filter((record) => record.dormId === dorm.id);
+        const occupied = people.length;
+        const remaining = dorm.capacity - occupied;
+        const percent = Math.min(100, Math.round((occupied / dorm.capacity) * 100));
+        const statusClass = remaining <= 0 ? "red" : remaining <= 1 ? "amber" : "green";
+        const statusText = remaining <= 0 ? "已满" : `剩余 ${remaining}`;
+        const names = people.length ? people.map((item) => item.name).join("、") : "暂无选择";
+        const disabled = remaining <= 0 ? "disabled" : "";
+
+        return `
+          <button class="dorm-card ${remaining <= 0 ? "full" : ""}" type="button" onclick="chooseDorm('${dorm.id}')" ${disabled}>
+            <div class="dorm-top">
+              <div>
+                <div class="dorm-title">${escapeHtml(dorm.name)}</div>
+                <div class="people">${dorm.gender}生宿舍 · ${occupied}/${dorm.capacity}</div>
+              </div>
+              <span class="tag ${statusClass}">${statusText}</span>
+            </div>
+            <div class="progress" aria-hidden="true"><span style="width:${percent}%"></span></div>
+            <div class="people"><strong>已选：</strong>${escapeHtml(names)}</div>
+          </button>
+        `;
+      }).join("");
+    }
+
+    async function chooseDorm(dormId) {
+      if (!ensureConfigured()) return;
+      const form = document.querySelector("#choiceForm");
+      if (!form.reportValidity()) return;
+
+      const name = document.querySelector("#studentName").value.trim();
+      const gender = activeGender;
+      const studentId = document.querySelector("#studentId").value.trim();
+      const dorm = state.dorms.find((item) => item.id === dormId);
+
+      if (!/^120242227\d{3}$/.test(studentId)) {
+        showToast("学号格式应为 120242227xxx，例如 120242227001。");
+        return;
+      }
+
+      if (!dorm) {
+        showToast("没有找到这个宿舍。");
+        return;
+      }
+
+      if (dorm.gender !== gender) {
+        showToast("请在对应性别页面选择宿舍。");
+        return;
+      }
+
+      try {
+        const result = await rpc("choose_dorm", {
+          p_name: name,
+          p_gender: gender,
+          p_student_id: studentId,
+          p_dorm_id: dormId
+        });
+
+        if (result.status === "full") {
+          showToast("这个宿舍刚刚满员了，请选择其他宿舍。");
+          await refreshData();
+          return;
+        }
+
+        if (result.status === "gender_mismatch") {
+          showToast("请在对应性别页面选择宿舍。");
+          await refreshData();
+          return;
+        }
+
+        if (result.status === "invalid_student_id") {
+          showToast("学号格式应为 120242227xxx，例如 120242227001。");
+          return;
+        }
+
+        if (result.status === "duplicate_student_id") {
+          showToast("这个学号已经被其他姓名使用，请检查后再提交。");
+          await refreshData();
+          return;
+        }
+
+        showToast(result.status === "updated" ? `已更新为 ${dorm.name}。` : `提交成功，已选择 ${dorm.name}。`);
+        form.reset();
+        document.querySelector("#studentGender").value = activeGender;
+        await refreshData();
+      } catch (error) {
+        handleError(error);
+      }
+    }
+
+    function renderDormTable() {
+      if (!state.dorms.length) {
+        els.dormTable.innerHTML = `<tr><td colspan="5" class="empty">暂无宿舍</td></tr>`;
+        return;
+      }
+
+      els.dormTable.innerHTML = state.dorms.map((dorm) => {
+        const occupied = countDorm(dorm.id);
+        return `
+          <tr>
+            <td>${escapeHtml(dorm.name)}</td>
+            <td><span class="tag">${dorm.gender}</span></td>
+            <td>${dorm.capacity}</td>
+            <td>${occupied}</td>
+            <td>
+              <button class="button secondary" ${occupied > 0 ? "disabled" : ""} onclick="deleteDorm('${dorm.id}')">删除</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderRecordTable() {
+      if (!state.records.length) {
+        els.recordTable.innerHTML = `<tr><td colspan="6" class="empty">还没有同学提交选择</td></tr>`;
+        return;
+      }
+
+      const rows = [...state.records].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      els.recordTable.innerHTML = rows.map((record) => {
+        const dorm = state.dorms.find((item) => item.id === record.dormId);
+        return `
+          <tr>
+            <td>${formatTime(record.createdAt)}</td>
+            <td>${escapeHtml(record.name)}</td>
+            <td>${record.gender}</td>
+            <td>${escapeHtml(record.studentId)}</td>
+            <td>${escapeHtml(dorm ? dorm.name : "宿舍已删除")}</td>
+            <td><button class="button secondary" onclick="deleteRecord('${record.id}')">撤销</button></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function countDorm(dormId) {
+      return state.records.filter((record) => record.dormId === dormId).length;
+    }
+
+    async function deleteDorm(id) {
+      if (!ensureConfigured()) return;
+      if (countDorm(id) > 0) return;
+      try {
+        await db(`dorms?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
+        showToast("已删除宿舍。");
+        await refreshData();
+      } catch (error) {
+        handleError(error);
+      }
+    }
+
+    async function deleteRecord(id) {
+      if (!ensureConfigured()) return;
+      if (!confirm("确定撤销这条选择记录吗？")) return;
+      try {
+        await db(`records?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
+        showToast("已撤销选择记录。");
+        await refreshData();
+      } catch (error) {
+        handleError(error);
+      }
+    }
+
+    async function refreshData({ silent = false } = {}) {
+      if (!isSupabaseConfigured()) {
+        state = { dorms: structuredClone(defaultDorms), records: [] };
+        render();
+        setSyncStatus("请先填写 Supabase 地址和 anon key。");
+        return;
+      }
+
+      if (isRefreshing) return;
+      isRefreshing = true;
+      if (!silent) setSyncStatus("正在同步在线数据...");
+
+      try {
+        const [dormRows, recordRows] = await Promise.all([
+          db("dorms?select=*&order=name.asc"),
+          db("records?select=*&order=created_at.asc")
+        ]);
+
+        state = {
+          dorms: dormRows.map(mapDorm),
+          records: recordRows.map(mapRecord)
+        };
+
+        if (!state.dorms.length) {
+          await seedDefaultDorms();
+          return;
+        }
+
+        render();
+        setSyncStatus(`已连接在线数据库 · ${formatSyncTime(new Date())}`);
+      } catch (error) {
+        handleError(error);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    async function seedDefaultDorms() {
+      await db("dorms?on_conflict=id", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify(defaultDorms)
+      });
+      const [dormRows, recordRows] = await Promise.all([
+        db("dorms?select=*&order=name.asc"),
+        db("records?select=*&order=created_at.asc")
+      ]);
+      state = {
+        dorms: dormRows.map(mapDorm),
+        records: recordRows.map(mapRecord)
+      };
+      render();
+      setSyncStatus(`已初始化在线宿舍 · ${formatSyncTime(new Date())}`);
+    }
+
+    async function resetDorms() {
+      await clearRemoteData();
+      await seedDefaultDorms();
+    }
+
+    async function clearRemoteData() {
+      await db("records?id=not.is.null", { method: "DELETE" });
+      await db("dorms?id=not.is.null", { method: "DELETE" });
+      state = { dorms: [], records: [] };
+      render();
+      setSyncStatus(`已清空在线数据 · ${formatSyncTime(new Date())}`);
+    }
+
+    async function db(path, options = {}) {
+      const response = await fetch(`${getSupabaseBaseUrl()}/rest/v1/${path}`, {
+        ...options,
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation",
+          ...(options.headers || {})
+        }
+      });
+      return parseResponse(response);
+    }
+
+    async function rpc(functionName, body) {
+      const response = await fetch(`${getSupabaseBaseUrl()}/rest/v1/rpc/${functionName}`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      return parseResponse(response);
+    }
+
+    async function parseResponse(response) {
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!response.ok) {
+        const message = data?.message || data?.hint || `数据库请求失败：${response.status}`;
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    function mapDorm(row) {
+      return {
+        id: row.id,
+        name: row.name,
+        gender: row.gender,
+        capacity: Number(row.capacity)
+      };
+    }
+
+    function mapRecord(row) {
+      return {
+        id: row.id,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        name: row.name,
+        gender: row.gender,
+        studentId: row.student_id,
+        dormId: row.dorm_id,
+        note: ""
+      };
+    }
+
+    function isSupabaseConfigured() {
+      return getSupabaseBaseUrl().startsWith("https://") &&
+        !getSupabaseBaseUrl().includes("YOUR-PROJECT") &&
+        SUPABASE_ANON_KEY &&
+        SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
+    }
+
+    function getSupabaseBaseUrl() {
+      return SUPABASE_URL
+        .trim()
+        .replace(/\/rest\/v1\/?$/i, "")
+        .replace(/\/+$/, "");
+    }
+
+    function ensureConfigured() {
+      if (isSupabaseConfigured()) return true;
+      showToast("请先在 index.html 里填写 Supabase 配置。");
+      setSyncStatus("未配置在线数据库，当前只是预览界面。");
+      return false;
+    }
+
+    function setSyncStatus(message) {
+      els.syncStatus.textContent = message;
+    }
+
+    function handleError(error) {
+      console.error(error);
+      showToast(error.message || "操作失败，请稍后重试。");
+      setSyncStatus("同步失败，请检查数据库配置或网络。");
+    }
+
+    function exportCsv() {
+      const rows = [
+        ["提交时间", "姓名", "性别", "学号", "宿舍"],
+        ...state.records.map((record) => {
+          const dorm = state.dorms.find((item) => item.id === record.dormId);
+          return [
+            formatTime(record.createdAt),
+            record.name,
+            record.gender,
+            record.studentId,
+            dorm ? dorm.name : "宿舍已删除"
+          ];
+        })
+      ];
+      const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `宿舍选择名单-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("已导出 CSV 名单。");
+    }
+
+    function csvCell(value) {
+      return `"${String(value).replaceAll('"', '""')}"`;
+    }
+
+    function normalize(value) {
+      return String(value).trim().toLowerCase();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatTime(value) {
+      return new Intl.DateTimeFormat("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date(value));
+    }
+
+    function formatSyncTime(value) {
+      return new Intl.DateTimeFormat("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      }).format(value);
+    }
+
+    let toastTimer;
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    window.deleteDorm = deleteDorm;
+    window.deleteRecord = deleteRecord;
+    window.chooseDorm = chooseDorm;
+
+    refreshData();
+    setInterval(() => refreshData({ silent: true }), REFRESH_INTERVAL_MS);
+  </script>
+</body>
+</html>
