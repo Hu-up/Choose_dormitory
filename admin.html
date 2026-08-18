@@ -338,7 +338,7 @@
       transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
     }
 
-    .dorm-card:not(:disabled):hover {
+    .dorm-card:not(.full):hover {
       border-color: var(--blue);
       box-shadow: 0 14px 30px rgba(29, 100, 216, .18);
       transform: translateY(-2px);
@@ -415,6 +415,36 @@
       color: var(--ink);
     }
 
+    .bed-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .bed-button {
+      min-height: 42px;
+      border: 1px solid #c8dbf5;
+      border-radius: 8px;
+      background: #f8fbff;
+      color: var(--blue-900);
+      cursor: pointer;
+      font-weight: 800;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+
+    .bed-button:not(:disabled):hover {
+      border-color: var(--blue);
+      background: #eaf3ff;
+      transform: translateY(-1px);
+    }
+
+    .bed-button:disabled {
+      border-color: #e0e6ef;
+      background: #f1f5f9;
+      color: #8b97a8;
+      cursor: not-allowed;
+    }
+
     .table-wrap {
       overflow-x: auto;
     }
@@ -453,6 +483,39 @@
       background: var(--amber-soft);
       color: #5f4300;
       font-size: 14px;
+    }
+
+    .settings-summary {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .settings-summary div {
+      background: #f7fbff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .settings-summary span {
+      color: var(--muted);
+      display: block;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .settings-summary strong {
+      color: var(--blue-900);
+      font-size: 15px;
+    }
+
+    .log-detail {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 4px;
+      max-width: 360px;
     }
 
     .toast {
@@ -514,7 +577,8 @@
       }
 
       .stats,
-      .two {
+      .two,
+      .settings-summary {
         grid-template-columns: 1fr;
       }
 
@@ -540,11 +604,13 @@
         <button class="nav-button" data-view="choose" data-gender="女">女生宿舍</button>
         <button class="nav-button" data-view="manage">宿舍管理</button>
         <button class="nav-button" data-view="records">选择名单</button>
+        <button class="nav-button" data-view="settings">系统设置</button>
+        <button class="nav-button" data-view="logs">操作日志</button>
       </nav>
 
       <div class="side-card">
         <strong>后台入口</strong>
-        <p>这个页面只给管理员使用，用来配置宿舍、查看名单、导出 CSV 和撤销错误记录。</p>
+        <p>这个页面只给管理员使用，用来配置宿舍、查看名单、设置开放时间和查看操作日志。</p>
       </div>
       <div class="sync-status" id="syncStatus">正在连接在线数据库...</div>
     </aside>
@@ -554,7 +620,7 @@
         <div class="topbar">
           <div>
             <h2 id="chooseTitle">男生宿舍</h2>
-            <p id="chooseHint">填写个人信息后，直接点击一个有空床位的男生宿舍。</p>
+            <p id="chooseHint">可先填写个人信息；系统开放后，再点击宿舍卡片中的床位进行选宿。</p>
           </div>
           <div class="actions">
             <button class="button secondary" id="exportRecordsBtn">导出名单</button>
@@ -588,7 +654,7 @@
                     <input id="studentId" required inputmode="numeric" pattern="120242227[0-9]{3}" maxlength="12" placeholder="例如：120242227001">
                   </label>
                 </div>
-                <div class="notice">填完个人信息后，在右侧点击宿舍卡片即可提交或更新选择。</div>
+                <div class="notice">可先填写个人信息；系统开放后，再点击宿舍卡片中的床位进行选宿。</div>
               </form>
             </div>
           </section>
@@ -674,7 +740,7 @@
         <div class="topbar">
           <div>
             <h2>选择名单</h2>
-            <p>可查看、撤销单条选择，也可以导出后在 Excel 中整理。</p>
+            <p>可查看已确认选择，也可以导出后在 Excel 中整理。确认后的记录不可修改或撤销。</p>
           </div>
           <div class="actions">
             <button class="button secondary" id="exportRecordsBtn2">导出名单</button>
@@ -691,10 +757,87 @@
                   <th>性别</th>
                   <th>学号</th>
                   <th>宿舍</th>
-                  <th>操作</th>
+                  <th>床位</th>
                 </tr>
               </thead>
               <tbody id="recordTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="view-settings" class="hidden">
+        <div class="topbar">
+          <div>
+            <h2>系统设置</h2>
+            <p>设置宿舍选择开放状态和开始、截止时间。服务端会按这里的时间强制拦截提交。</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>当前状态</h3>
+              <p>学生端会同步显示该状态。</p>
+            </div>
+            <div class="panel-body">
+              <div class="settings-summary" id="settingsSummary"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>开放时间</h3>
+              <p>留空表示不限制对应时间。</p>
+            </div>
+            <div class="panel-body">
+              <form class="form-grid" id="settingsForm">
+                <label>
+                  系统状态
+                  <select id="settingIsOpen">
+                    <option value="true">开放</option>
+                    <option value="false">关闭</option>
+                  </select>
+                </label>
+                <div class="two">
+                  <label>
+                    开始时间
+                    <input id="settingOpensAt" type="datetime-local">
+                  </label>
+                  <label>
+                    截止时间
+                    <input id="settingClosesAt" type="datetime-local">
+                  </label>
+                </div>
+                <button class="button" type="submit">保存设置</button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-logs" class="hidden">
+        <div class="topbar">
+          <div>
+            <h2>操作日志</h2>
+            <p>记录首次选择、系统设置变更等关键操作，方便追溯。</p>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="panel-body table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>学号</th>
+                  <th>姓名</th>
+                  <th>操作</th>
+                  <th>原宿舍</th>
+                  <th>新宿舍</th>
+                </tr>
+              </thead>
+              <tbody id="logTable"></tbody>
             </table>
           </div>
         </section>
@@ -704,34 +847,30 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="assets/dorm-data.js"></script>
   <script>
     const SUPABASE_URL = "https://kzyxwnvjhojzayregxgc.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_SEzzFIpvvqv8fLvtphWfdA_8pnzVdQM";
-    const REFRESH_INTERVAL_MS = 15000;
+    const REFRESH_INTERVAL_MS = 5000;
 
-    const defaultDorms = [
-      ...Array.from({ length: 32 }, (_, index) => ({
-        id: `m-${index + 1}`,
-        name: `男生 ${String(index + 1).padStart(2, "0")} 宿舍`,
-        gender: "男",
-        capacity: 4
-      })),
-      ...Array.from({ length: 21 }, (_, index) => ({
-        id: `f-${index + 1}`,
-        name: `女生 ${String(index + 1).padStart(2, "0")} 宿舍`,
-        gender: "女",
-        capacity: 4
-      }))
-    ];
+    const defaultDorms = window.DORM_DEFAULTS || [];
+    const allowedStudents = window.ALLOWED_STUDENTS || [];
 
-    let state = { dorms: [], records: [] };
+    let state = {
+      dorms: [],
+      records: [],
+      logs: [],
+      settings: { isOpen: true, opensAt: null, closesAt: null, updatedAt: null }
+    };
     let activeGender = "男";
     let isRefreshing = false;
 
     const views = {
       choose: document.querySelector("#view-choose"),
       manage: document.querySelector("#view-manage"),
-      records: document.querySelector("#view-records")
+      records: document.querySelector("#view-records"),
+      settings: document.querySelector("#view-settings"),
+      logs: document.querySelector("#view-logs")
     };
 
     const els = {
@@ -739,6 +878,8 @@
       dormList: document.querySelector("#dormList"),
       dormTable: document.querySelector("#dormTable"),
       recordTable: document.querySelector("#recordTable"),
+      logTable: document.querySelector("#logTable"),
+      settingsSummary: document.querySelector("#settingsSummary"),
       toast: document.querySelector("#toast"),
       syncStatus: document.querySelector("#syncStatus"),
       chooseTitle: document.querySelector("#chooseTitle"),
@@ -764,6 +905,38 @@
     document.querySelector("#choiceForm").addEventListener("submit", (event) => {
       event.preventDefault();
       showToast("请直接点击右侧宿舍卡片完成选择。");
+    });
+
+    document.querySelector("#studentName").addEventListener("blur", () => validateStudentInfo());
+    document.querySelector("#studentId").addEventListener("blur", () => validateStudentInfo());
+
+    document.querySelector("#settingsForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!ensureConfigured()) return;
+
+      const isOpen = document.querySelector("#settingIsOpen").value === "true";
+      const opensAt = toIsoOrNull(document.querySelector("#settingOpensAt").value);
+      const closesAt = toIsoOrNull(document.querySelector("#settingClosesAt").value);
+
+      if (opensAt && closesAt && new Date(opensAt) >= new Date(closesAt)) {
+        showToast("开始时间必须早于截止时间。");
+        return;
+      }
+
+      try {
+        await db("system_settings?id=eq.main", {
+          method: "PATCH",
+          body: JSON.stringify({
+            is_open: isOpen,
+            opens_at: opensAt,
+            closes_at: closesAt
+          })
+        });
+        showToast("系统设置已保存。");
+        await refreshData();
+      } catch (error) {
+        handleError(error);
+      }
     });
 
     document.querySelector("#dormForm").addEventListener("submit", async (event) => {
@@ -799,6 +972,10 @@
 
     document.querySelector("#resetDormsBtn").addEventListener("click", async () => {
       if (!ensureConfigured()) return;
+      if (state.records.length) {
+        showToast("已有确认记录，不能恢复默认宿舍。");
+        return;
+      }
       if (!confirm("恢复默认宿舍会删除当前宿舍配置和所有选择记录，确定继续吗？")) return;
       try {
         await resetDorms();
@@ -810,6 +987,10 @@
 
     document.querySelector("#clearAllBtn").addEventListener("click", async () => {
       if (!ensureConfigured()) return;
+      if (state.records.length) {
+        showToast("已有确认记录，不能清空数据。");
+        return;
+      }
       if (!confirm("确定清空全部数据吗？这个操作无法撤销。")) return;
       try {
         await clearRemoteData();
@@ -828,6 +1009,8 @@
       renderDormList();
       renderDormTable();
       renderRecordTable();
+      renderSettings();
+      renderLogTable();
     }
 
     function renderStats() {
@@ -853,14 +1036,18 @@
     }
 
     function renderChoosePageText() {
+      const availability = getSystemAvailability();
       document.querySelector("#studentGender").value = activeGender;
       els.chooseTitle.textContent = `${activeGender}生宿舍`;
-      els.chooseHint.textContent = `填写个人信息后，直接点击一个有空床位的${activeGender}生宿舍。`;
+      els.chooseHint.textContent = availability.available
+        ? "填写完个人信息后，即可点击宿舍卡片中的床位进行选宿。"
+        : availability.message;
       els.dormListTitle.textContent = `${activeGender}生宿舍余量`;
     }
 
     function renderDormList() {
       const dorms = state.dorms.filter((dorm) => dorm.gender === activeGender);
+      const availability = getSystemAvailability();
 
       if (!dorms.length) {
         els.dormList.innerHTML = `<div class="empty">还没有宿舍，请先到“宿舍管理”添加。</div>`;
@@ -874,11 +1061,19 @@
         const percent = Math.min(100, Math.round((occupied / dorm.capacity) * 100));
         const statusClass = remaining <= 0 ? "red" : remaining <= 1 ? "amber" : "green";
         const statusText = remaining <= 0 ? "已满" : `剩余 ${remaining}`;
-        const names = people.length ? people.map((item) => item.name).join("、") : "暂无选择";
-        const disabled = remaining <= 0 ? "disabled" : "";
+        const names = people.length
+          ? people.map((item) => `${item.bedNumber || "?"}床：${item.name}`).join("、")
+          : "暂无选择";
+        const bedButtons = Array.from({ length: dorm.capacity }, (_, index) => {
+          const bedNumber = index + 1;
+          const occupant = people.find((item) => Number(item.bedNumber) === bedNumber);
+          const disabled = occupant || !availability.available ? "disabled" : "";
+          const label = occupant ? `${bedNumber}床 已选` : `${bedNumber}床`;
+          return `<button class="bed-button" type="button" onclick="chooseDorm('${dorm.id}', ${bedNumber})" ${disabled}>${escapeHtml(label)}</button>`;
+        }).join("");
 
         return `
-          <button class="dorm-card ${remaining <= 0 ? "full" : ""}" type="button" onclick="chooseDorm('${dorm.id}')" ${disabled}>
+          <div class="dorm-card ${remaining <= 0 ? "full" : ""}">
             <div class="dorm-top">
               <div>
                 <div class="dorm-title">${escapeHtml(dorm.name)}</div>
@@ -888,12 +1083,13 @@
             </div>
             <div class="progress" aria-hidden="true"><span style="width:${percent}%"></span></div>
             <div class="people"><strong>已选：</strong>${escapeHtml(names)}</div>
-          </button>
+            <div class="bed-grid">${bedButtons}</div>
+          </div>
         `;
       }).join("");
     }
 
-    async function chooseDorm(dormId) {
+    async function chooseDorm(dormId, bedNumber) {
       if (!ensureConfigured()) return;
       const form = document.querySelector("#choiceForm");
       if (!form.reportValidity()) return;
@@ -902,6 +1098,15 @@
       const gender = activeGender;
       const studentId = document.querySelector("#studentId").value.trim();
       const dorm = state.dorms.find((item) => item.id === dormId);
+      const availability = getSystemAvailability();
+      const normalizedBedNumber = Number(bedNumber);
+
+      if (!validateStudentInfo()) return;
+
+      if (!availability.available) {
+        showToast(availability.message);
+        return;
+      }
 
       if (!/^120242227\d{3}$/.test(studentId)) {
         showToast("学号格式应为 120242227xxx，例如 120242227001。");
@@ -918,16 +1123,52 @@
         return;
       }
 
+      if (!Number.isInteger(normalizedBedNumber) || normalizedBedNumber < 1 || normalizedBedNumber > Number(dorm.capacity)) {
+        showToast("请选择有效的床位。");
+        return;
+      }
+
       try {
         const result = await rpc("choose_dorm", {
           p_name: name,
           p_gender: gender,
           p_student_id: studentId,
-          p_dorm_id: dormId
+          p_dorm_id: dormId,
+          p_bed_number: normalizedBedNumber
         });
 
         if (result.status === "full") {
           showToast("这个宿舍刚刚满员了，请选择其他宿舍。");
+          await refreshData();
+          return;
+        }
+
+        if (result.status === "bed_taken") {
+          showToast("这个床位刚刚被选走了，请选择其他床位。");
+          await refreshData();
+          return;
+        }
+
+        if (result.status === "invalid_bed_number") {
+          showToast("请选择有效的床位。");
+          await refreshData();
+          return;
+        }
+
+        if (result.status === "system_closed") {
+          showToast("系统当前未开放。可以先填写个人信息，开放后再选择宿舍和床位。");
+          await refreshData();
+          return;
+        }
+
+        if (result.status === "not_started") {
+          showToast("宿舍选择还未开始。可以先填写个人信息，开放后再选择宿舍和床位。");
+          await refreshData();
+          return;
+        }
+
+        if (result.status === "ended") {
+          showToast("宿舍选择已经截止，不能再提交。");
           await refreshData();
           return;
         }
@@ -943,13 +1184,34 @@
           return;
         }
 
+        if (result.status === "not_allowed") {
+          showToast("该学号不在本次宿舍选择名单中，请检查后再提交。");
+          return;
+        }
+
+        if (result.status === "student_gender_mismatch") {
+          showToast("该学号对应的性别与当前页面不一致，请检查名单信息。");
+          return;
+        }
+
+        if (result.status === "student_name_mismatch") {
+          showToast("姓名与名单中的学号不匹配，请按名单姓名填写。");
+          return;
+        }
+
         if (result.status === "duplicate_student_id") {
           showToast("这个学号已经被其他姓名使用，请检查后再提交。");
           await refreshData();
           return;
         }
 
-        showToast(result.status === "updated" ? `已更新为 ${dorm.name}。` : `提交成功，已选择 ${dorm.name}。`);
+        if (result.status === "already_selected") {
+          showToast("该学号已经确认过床位，不能再次修改。");
+          await refreshData();
+          return;
+        }
+
+        showToast(`提交成功，已确认 ${dorm.name} ${normalizedBedNumber}床。确认后不可修改。`);
         form.reset();
         document.querySelector("#studentGender").value = activeGender;
         await refreshData();
@@ -996,14 +1258,86 @@
             <td>${record.gender}</td>
             <td>${escapeHtml(record.studentId)}</td>
             <td>${escapeHtml(dorm ? dorm.name : "宿舍已删除")}</td>
-            <td><button class="button secondary" onclick="deleteRecord('${record.id}')">撤销</button></td>
+            <td>${record.bedNumber ? `${record.bedNumber}床` : "-"}</td>
           </tr>
         `;
       }).join("");
     }
 
+    function renderSettings() {
+      const settings = state.settings || { isOpen: true, opensAt: null, closesAt: null, updatedAt: null };
+      const availability = getSystemAvailability();
+
+      els.settingsSummary.innerHTML = [
+        ["开放状态", availability.available ? "可提交" : "不可提交"],
+        ["开始时间", settings.opensAt ? formatTime(settings.opensAt) : "不限制"],
+        ["截止时间", settings.closesAt ? formatTime(settings.closesAt) : "不限制"]
+      ].map(([label, value]) => `
+        <div>
+          <span>${label}</span>
+          <strong>${value}</strong>
+        </div>
+      `).join("");
+
+      document.querySelector("#settingIsOpen").value = String(Boolean(settings.isOpen));
+      document.querySelector("#settingOpensAt").value = toDateTimeLocal(settings.opensAt);
+      document.querySelector("#settingClosesAt").value = toDateTimeLocal(settings.closesAt);
+    }
+
+    function renderLogTable() {
+      if (!state.logs.length) {
+        els.logTable.innerHTML = `<tr><td colspan="6" class="empty">暂无操作日志</td></tr>`;
+        return;
+      }
+
+      els.logTable.innerHTML = state.logs.map((log) => `
+        <tr>
+          <td>${formatTime(log.createdAt)}</td>
+          <td>${escapeHtml(log.studentId || "-")}</td>
+          <td>${escapeHtml(log.studentName || "-")}</td>
+          <td>
+            ${escapeHtml(log.action)}
+            ${log.detail ? `<div class="log-detail">${escapeHtml(log.detail)}</div>` : ""}
+          </td>
+          <td>${escapeHtml(log.oldDormName || "-")}</td>
+          <td>${escapeHtml(log.newDormName || "-")}</td>
+        </tr>
+      `).join("");
+    }
+
     function countDorm(dormId) {
       return state.records.filter((record) => record.dormId === dormId).length;
+    }
+
+    function validateStudentInfo() {
+      const name = document.querySelector("#studentName").value.trim();
+      const studentId = document.querySelector("#studentId").value.trim();
+      const gender = activeGender;
+
+      if (!name || !studentId) return true;
+
+      if (!/^120242227\d{3}$/.test(studentId)) {
+        showToast("学号格式应为 120242227xxx，例如 120242227001。");
+        return false;
+      }
+
+      const student = allowedStudents.find((item) => item.student_id === studentId);
+      if (!student) {
+        showToast("该学号不在本次宿舍选择名单中，请检查后再填写。");
+        return false;
+      }
+
+      if (student.gender !== gender) {
+        showToast("该学号对应的性别与当前页面不一致，请进入对应性别页面。");
+        return false;
+      }
+
+      if (student.name !== name) {
+        showToast("姓名与名单中的学号不匹配，请按名单姓名填写。");
+        return false;
+      }
+
+      return true;
     }
 
     async function deleteDorm(id) {
@@ -1020,19 +1354,17 @@
 
     async function deleteRecord(id) {
       if (!ensureConfigured()) return;
-      if (!confirm("确定撤销这条选择记录吗？")) return;
-      try {
-        await db(`records?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
-        showToast("已撤销选择记录。");
-        await refreshData();
-      } catch (error) {
-        handleError(error);
-      }
+      showToast("已确认的选择记录不可修改或撤销。");
     }
 
     async function refreshData({ silent = false } = {}) {
       if (!isSupabaseConfigured()) {
-        state = { dorms: structuredClone(defaultDorms), records: [] };
+        state = {
+          dorms: structuredClone(defaultDorms),
+          records: [],
+          logs: [],
+          settings: { isOpen: true, opensAt: null, closesAt: null, updatedAt: null }
+        };
         render();
         setSyncStatus("请先填写 Supabase 地址和 anon key。");
         return;
@@ -1043,14 +1375,18 @@
       if (!silent) setSyncStatus("正在同步在线数据...");
 
       try {
-        const [dormRows, recordRows] = await Promise.all([
+        const [dormRows, recordRows, settingRows, logRows] = await Promise.all([
           db("dorms?select=*&order=name.asc"),
-          db("records?select=*&order=created_at.asc")
+          db("records?select=*&order=created_at.asc"),
+          optionalDb("system_settings?select=*&id=eq.main"),
+          optionalDb("audit_log?select=*&order=created_at.desc&limit=300")
         ]);
 
         state = {
           dorms: dormRows.map(mapDorm),
-          records: recordRows.map(mapRecord)
+          records: recordRows.map(mapRecord),
+          settings: mapSettings(settingRows?.[0]),
+          logs: (logRows || []).map(mapLog)
         };
 
         if (!state.dorms.length) {
@@ -1079,7 +1415,9 @@
       ]);
       state = {
         dorms: dormRows.map(mapDorm),
-        records: recordRows.map(mapRecord)
+        records: recordRows.map(mapRecord),
+        logs: [],
+        settings: state.settings || { isOpen: true, opensAt: null, closesAt: null, updatedAt: null }
       };
       render();
       setSyncStatus(`已初始化在线宿舍 · ${formatSyncTime(new Date())}`);
@@ -1093,7 +1431,12 @@
     async function clearRemoteData() {
       await db("records?id=not.is.null", { method: "DELETE" });
       await db("dorms?id=not.is.null", { method: "DELETE" });
-      state = { dorms: [], records: [] };
+      state = {
+        dorms: [],
+        records: [],
+        logs: [],
+        settings: state.settings || { isOpen: true, opensAt: null, closesAt: null, updatedAt: null }
+      };
       render();
       setSyncStatus(`已清空在线数据 · ${formatSyncTime(new Date())}`);
     }
@@ -1110,6 +1453,15 @@
         }
       });
       return parseResponse(response);
+    }
+
+    async function optionalDb(path, options = {}) {
+      try {
+        return await db(path, options);
+      } catch (error) {
+        console.warn(error);
+        return null;
+      }
     }
 
     async function rpc(functionName, body) {
@@ -1153,8 +1505,65 @@
         gender: row.gender,
         studentId: row.student_id,
         dormId: row.dorm_id,
+        bedNumber: row.bed_number,
         note: ""
       };
+    }
+
+    function mapSettings(row) {
+      if (!row) {
+        return { isOpen: true, opensAt: null, closesAt: null, updatedAt: null };
+      }
+      return {
+        isOpen: Boolean(row.is_open),
+        opensAt: row.opens_at,
+        closesAt: row.closes_at,
+        updatedAt: row.updated_at
+      };
+    }
+
+    function mapLog(row) {
+      return {
+        id: row.id,
+        createdAt: row.created_at,
+        studentId: row.student_id,
+        studentName: row.student_name,
+        action: row.action,
+        oldDormId: row.old_dorm_id,
+        oldDormName: row.old_dorm_name,
+        newDormId: row.new_dorm_id,
+        newDormName: row.new_dorm_name,
+        detail: row.detail
+      };
+    }
+
+    function getSystemAvailability() {
+      const settings = state.settings || { isOpen: true, opensAt: null, closesAt: null };
+      const now = Date.now();
+      const opensAt = settings.opensAt ? new Date(settings.opensAt).getTime() : null;
+      const closesAt = settings.closesAt ? new Date(settings.closesAt).getTime() : null;
+
+      if (!settings.isOpen) {
+        return { available: false, message: "系统当前未开放。学生可以先填写个人信息，开放后再选择宿舍和床位。" };
+      }
+      if (opensAt && now < opensAt) {
+        return { available: false, message: `宿舍选择将于 ${formatTime(settings.opensAt)} 开始。学生可以先填写个人信息，开放后再选择宿舍和床位。` };
+      }
+      if (closesAt && now > closesAt) {
+        return { available: false, message: `宿舍选择已于 ${formatTime(settings.closesAt)} 截止。` };
+      }
+      return { available: true, message: "系统已开放。" };
+    }
+
+    function toIsoOrNull(value) {
+      return value ? new Date(value).toISOString() : null;
+    }
+
+    function toDateTimeLocal(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
     }
 
     function isSupabaseConfigured() {
@@ -1190,7 +1599,7 @@
 
     function exportCsv() {
       const rows = [
-        ["提交时间", "姓名", "性别", "学号", "宿舍"],
+        ["提交时间", "姓名", "性别", "学号", "宿舍", "床位"],
         ...state.records.map((record) => {
           const dorm = state.dorms.find((item) => item.id === record.dormId);
           return [
@@ -1198,7 +1607,8 @@
             record.name,
             record.gender,
             record.studentId,
-            dorm ? dorm.name : "宿舍已删除"
+            dorm ? dorm.name : "宿舍已删除",
+            record.bedNumber ? `${record.bedNumber}床` : ""
           ];
         })
       ];
@@ -1262,6 +1672,10 @@
 
     refreshData();
     setInterval(() => refreshData({ silent: true }), REFRESH_INTERVAL_MS);
+    window.addEventListener("focus", () => refreshData({ silent: true }));
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshData({ silent: true });
+    });
   </script>
 </body>
 </html>
